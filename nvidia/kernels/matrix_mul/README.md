@@ -291,6 +291,21 @@ tx = thread_id % (WSUBN/TN)
 output[wy*WM + ty*TM : wy*WM + (ty+1)*TM,
        wx*WN + tx*TN : wx*WN + (tx+1)*TN]
 ```
+### sub-warp实现形式
+
+每个sub-warp也是有32个线程 `(WSUBM/TM) × (WSUBM/TN) = 32`，一个线程处理 `TM * TN` 个元素。
+sub-warp之间是分时处理，从而实现shared memory -> register 和 实际运算的同时进行；
+与输入矩阵的K维被拆分为若干个block分别计算BK维度分时计算是一个逻辑。
+
+**BK 的循环**：
+- 目标：减少 Global Memory 访问。
+- 手段：把 K 维切开，把一小块 $A$ 和 $B$ 搬进 Shared Memory，在这个 BK 范围内，Shared Memory 里的数据被整个 Thread Block 反复压榨。
+
+**Sub-Warp 的循环**：
+- 目标：减少 Shared Memory 访问。
+- 手段：在 Warp Tile 内部切开，把一小块数据搬进寄存器，在这个 Sub-Warp 范围内，寄存器里的数据被 Warp 内的 32 个线程 反复压榨。
+
+
 
 ### 双缓冲实现
 
