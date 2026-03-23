@@ -63,7 +63,7 @@ void matrix_mul_naive_kernel(const float* A, const float* B, float* C,
 def benchmark_optimized_kernel(A, B, C, M, K, N, warmup=5, iterations=20):
     """Benchmark optimized kernel"""
     # Read the optimized kernel code
-    with open('optimized_kernel.cu', 'r') as f:
+    with open('../../kernels/matrix_mul/optimized_kernel.cu', 'r') as f:
         kernel_code = f.read()
 
     # Compile the module
