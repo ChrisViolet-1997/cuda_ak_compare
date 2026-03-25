@@ -3,6 +3,18 @@
 
 #define BLOCK_SIZE 256
 
+__device__ void atomicMaxFloat(float* address, float val) {
+    int* address_as_int = (int*)address;
+    int old = *address_as_int;
+    int assumed;
+    do {
+        assumed = old;
+        if (val <= __int_as_float(assumed))
+            break;
+        old = atomicCAS(address_as_int, assumed, __float_as_int(val));
+    } while (assumed != old);
+}
+
 // 最原始版本：每个线程直接使用atomic操作
 // 这是性能最差的版本，但实现最简单
 
@@ -12,7 +24,7 @@ __global__ void naive_max_kernel(const float* __restrict__ x,
                                   int n) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if (idx < n) {
-        atomicMax((int*)out, __float_as_int(x[idx]));
+        atomicMaxFloat(out, x[idx]);
     }
 }
 

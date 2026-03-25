@@ -3,6 +3,24 @@
 
 #define BLOCK_SIZE 256
 
+__device__ void atomicMaxFloat(float* address, float val) {
+    int* address_as_int = (int*)address;
+    int old = *address_as_int;
+    int assumed;
+
+    // 循环直到成功更新
+    do {
+        assumed = old;
+        // 如果新值不大于当前值，直接退出，无需更新
+        if (val <= __int_as_float(assumed)) {
+            break;
+        }
+        // 尝试原子替换：如果地址处的值仍为 assumed，则更新为 val 的整数表示
+        old = atomicCAS(address_as_int, assumed, __float_as_int(val));
+    } while (assumed != old);
+}
+
+
 // 简单的全局reduce找最大值
 __global__ void simple_max_kernel(const float* __restrict__ x,
                                    float* __restrict__ out,
@@ -26,7 +44,7 @@ __global__ void simple_max_kernel(const float* __restrict__ x,
 
     // 第一个线程写入结果
     if (tid == 0) {
-        atomicMax((int*)out, __float_as_int(sdata[0]));
+        atomicMaxFloat(out, sdata[0]);
     }
 }
 
@@ -99,4 +117,3 @@ extern "C" void solve(const float* input, float* output, int N) {
     cudaFreeAsync(d_max, cudaStreamDefault);
     cudaFreeAsync(d_sum, cudaStreamDefault);
 }
-

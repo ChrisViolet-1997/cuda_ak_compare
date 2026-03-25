@@ -112,7 +112,7 @@ def main():
         correctness = "✓" if max_diff_warp < 1e-5 else "✗"
 
         print(f"{size:<12} {time_naive:<12.4f} {time_block:<12.4f} {time_warp:<12.4f} "
-              f"{speedup_block_vs_naive:<13.2f}x {speedup_warp_vs_naive:<13.2f}x {speedup_warp_vs_block:<12.2f}x {correctness}")
+              f"{f'{speedup_block_vs_naive:.2f}x':<14}{f'{speedup_warp_vs_naive:.2f}x':<14}{f'{speedup_warp_vs_block:.2f}x':<13}{correctness}")
 
     print("="*110)
 

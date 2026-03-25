@@ -9,6 +9,18 @@
 #define FULL_MASK 0xffffffff
 #define UPPER_DIV(A, B) (((A) + (B) - 1) / (B))
 
+__device__ void atomicMaxFloat(float* address, float val) {
+    int* address_as_int = (int*)address;
+    int old = *address_as_int;
+    int assumed;
+    do {
+        assumed = old;
+        if (val <= __int_as_float(assumed))
+            break;
+        old = atomicCAS(address_as_int, assumed, __float_as_int(val));
+    } while (assumed != old);
+}
+
 __device__ float warp_reduce_max(float v) {
     v = fmaxf(v, __shfl_down_sync(FULL_MASK, v, 16));
     v = fmaxf(v, __shfl_down_sync(FULL_MASK, v, 8));
@@ -49,7 +61,7 @@ __global__ void reduce_max_kernel(const float* __restrict__ x,
             float block_max = lane < BLOCK_SIZE / 32 ? smem[lane] : -INFINITY;
             //这一步就相当于将warp上存储的最大值，数量就是warp有多少个就复制多少个过来
             block_max = warp_reduce_max(block_max);
-            if(lane == 0) atomicMax((int*)out, __float_as_int(block_max));
+            if(lane == 0) atomicMaxFloat(out, block_max);
         }
     } 
 
